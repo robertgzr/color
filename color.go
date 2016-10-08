@@ -33,10 +33,15 @@ var (
 	colorsCacheMu sync.Mutex // protects colorsCache
 )
 
+var EscapeZshPrompt = false
+var EscapeBashPrompt = false
+
 // Color defines a custom color object which is defined by SGR parameters.
 type Color struct {
-	params  []Attribute
-	noColor *bool
+	params             []Attribute
+	noColor            *bool
+	zshPromptEscaping  *bool
+	bashPromptEscaping *bool
 }
 
 // Attribute defines a single SGR Code
@@ -366,11 +371,26 @@ func (c *Color) wrap(s string) string {
 }
 
 func (c *Color) format() string {
-	return fmt.Sprintf("%s[%sm", escape, c.sequence())
+
+	var moreEsc string
+	if c.isBashPromptEscSet() {
+		moreEsc = "\\["
+	}
+	if c.isZshPromptEscSet() {
+		moreEsc = "%{"
+	}
+	return fmt.Sprintf("%s%s[%sm", moreEsc, escape, c.sequence())
 }
 
 func (c *Color) unformat() string {
-	return fmt.Sprintf("%s[%dm", escape, Reset)
+	var moreEsc string
+	if c.isBashPromptEscSet() {
+		moreEsc = "\\]"
+	}
+	if c.isZshPromptEscSet() {
+		moreEsc = "%}"
+	}
+	return fmt.Sprintf("%s[%dm%s", escape, Reset, moreEsc)
 }
 
 // DisableColor disables the color output. Useful to not change any existing
@@ -394,6 +414,42 @@ func (c *Color) isNoColorSet() bool {
 
 	// if not return the global option, which is disabled by default
 	return NoColor
+}
+
+// DisableZshPromptEscaping disables the color attribute escaping with `%{%}`
+func (c *Color) DisableZshPromptEscaping() {
+	c.zshPromptEscaping = boolPtr(false)
+}
+
+// EnableZshPromptEscaping enables the color attribute escaping with `%{%}`
+func (c *Color) EnableZshPromptEscaping() {
+	c.zshPromptEscaping = boolPtr(true)
+}
+
+func (c *Color) isZshPromptEscSet() bool {
+	if c.zshPromptEscaping != nil {
+		return *c.zshPromptEscaping
+	}
+
+	return EscapeZshPrompt
+}
+
+// DisableBashPromptEscaping disables the color attribute escaping with `%{%}`
+func (c *Color) DisableBashPromptEscaping() {
+	c.bashPromptEscaping = boolPtr(false)
+}
+
+// EnableBashPromptEscaping enables the color attribute escaping with `%{%}`
+func (c *Color) EnableBashPromptEscaping() {
+	c.bashPromptEscaping = boolPtr(true)
+}
+
+func (c *Color) isBashPromptEscSet() bool {
+	if c.bashPromptEscaping != nil {
+		return *c.bashPromptEscaping
+	}
+
+	return EscapeBashPrompt
 }
 
 // Equals returns a boolean value indicating whether two colors are equal.
