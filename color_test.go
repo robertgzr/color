@@ -340,3 +340,24 @@ func TestNoFormatString(t *testing.T) {
 		}
 	}
 }
+
+func TestColorTmux(t *testing.T) {
+	TmuxMode = true
+
+	tests := []struct {
+		f      func(string, ...interface{}) string
+		format string
+		args   []interface{}
+		want   string
+	}{
+		{BlackString, "%s", nil, "#[fg=black]%s#[reset]"},
+		{RedString, "%s", nil, "#[fg=red]%s#[reset]"},
+	}
+
+	for i, test := range tests {
+		s := fmt.Sprintf("%s", test.f(test.format, test.args...))
+		if s != test.want {
+			t.Errorf("[%d] want: %q, got: %q", i, test.want, s)
+		}
+	}
+}

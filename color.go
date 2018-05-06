@@ -35,6 +35,7 @@ var (
 
 var EscapeZshPrompt = false
 var EscapeBashPrompt = false
+var TmuxMode = false
 
 // Color defines a custom color object which is defined by SGR parameters.
 type Color struct {
@@ -42,6 +43,7 @@ type Color struct {
 	noColor            *bool
 	zshPromptEscaping  *bool
 	bashPromptEscaping *bool
+	tmuxMode           *bool
 }
 
 // Attribute defines a single SGR Code
@@ -110,6 +112,37 @@ const (
 	BgHiCyan
 	BgHiWhite
 )
+
+var tmuxString = map[Attribute]string{
+	Reset:        "default",
+	Bold:         "bold",
+	Faint:        "dim",
+	Italic:       "italic",
+	Underline:    "underline",
+	BlinkSlow:    "",
+	BlinkRapid:   "",
+	ReverseVideo: "",
+	Concealed:    "",
+	CrossedOut:   "",
+
+	FgBlack:   "fg=black",
+	FgRed:     "fg=red",
+	FgGreen:   "fg=green",
+	FgYellow:  "fg=yellow",
+	FgBlue:    "fg=blue",
+	FgMagenta: "fg=magenta",
+	FgCyan:    "fg=cyan",
+	FgWhite:   "fg=white",
+
+	BgBlack:   "bg=black",
+	BgRed:     "bg=red",
+	BgGreen:   "bg=green",
+	BgYellow:  "bg=yellow",
+	BgBlue:    "bg=blue",
+	BgMagenta: "bg=magenta",
+	BgCyan:    "bg=cyan",
+	BgWhite:   "bg=white",
+}
 
 // New returns a newly created color object.
 func New(value ...Attribute) *Color {
@@ -360,6 +393,14 @@ func (c *Color) sequence() string {
 	return strings.Join(format, ";")
 }
 
+func (c *Color) tmuxSequence() string {
+	format := make([]string, len(c.params))
+	for i, v := range c.params {
+		format[i] = tmuxString[v]
+	}
+	return "#[" + strings.Join(format, ",") + "]"
+}
+
 // wrap wraps the s string with the colors attributes. The string is ready to
 // be printed.
 func (c *Color) wrap(s string) string {
@@ -371,6 +412,9 @@ func (c *Color) wrap(s string) string {
 }
 
 func (c *Color) format() string {
+	if c.isTmuxModeSet() {
+		return c.tmuxSequence()
+	}
 
 	var moreEsc string
 	if c.isBashPromptEscSet() {
@@ -383,6 +427,10 @@ func (c *Color) format() string {
 }
 
 func (c *Color) unformat() string {
+	if c.isTmuxModeSet() {
+		return New(Reset).tmuxSequence()
+	}
+
 	var moreEsc string
 	if c.isBashPromptEscSet() {
 		moreEsc = "\\]"
@@ -450,6 +498,20 @@ func (c *Color) isBashPromptEscSet() bool {
 	}
 
 	return EscapeBashPrompt
+}
+
+func (c *Color) DisableTmuxMode() {
+	c.tmuxMode = boolPtr(false)
+}
+func (c *Color) EnableTmuxMode() {
+	c.tmuxMode = boolPtr(true)
+}
+func (c *Color) isTmuxModeSet() bool {
+	if c.tmuxMode != nil {
+		return *c.tmuxMode
+	}
+
+	return TmuxMode
 }
 
 // Equals returns a boolean value indicating whether two colors are equal.
