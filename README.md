@@ -1,12 +1,10 @@
-# Archived project. No maintenance. 
+## Why fork?
 
-This project is not maintained anymore and is archived. Feel free to fork and
-make your own changes if needed. For more detail read my blog post: [Taking an indefinite sabbatical from my projects](https://arslan.io/2018/10/09/taking-an-indefinite-sabbatical-from-my-projects/)
+This fork has patches to escape color sequences in bash/zsh/tmux environments.
 
-Thanks to everyone for their valuable feedback and contributions.
+These changes were rejected upstream: https://github.com/fatih/color/pull/44
 
-
-# Color [![GoDoc](https://godoc.org/github.com/fatih/color?status.svg)](https://godoc.org/github.com/fatih/color) 
+# Color [![GoDoc](https://godoc.org/github.com/robertgzr/color?status.svg)](https://godoc.org/github.com/robertgzr/color)
 
 Color lets you use colorized outputs in terms of [ANSI Escape
 Codes](http://en.wikipedia.org/wiki/ANSI_escape_code#Colors) in Go (Golang). It
